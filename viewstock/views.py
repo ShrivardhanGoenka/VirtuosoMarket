@@ -60,6 +60,3 @@ def init_get_data(request):
         'low52' : a['low52']
     }
     return JsonResponse(dict)
-
-def test(request):
-    return "This is a test in the test branch"
