@@ -1,0 +1,126 @@
+{% extends "viewstock/searchbar.html" %}
+
+ {% block stockinfo %}
+<br>
+<div class="container">
+
+<style media="screen">
+  .mybody{
+      min-height: 700px;
+      min-width: 600px;
+      cursor: pointer;
+  }
+</style>
+
+<div class="jumbotron mybody">
+    <h1>{{name}}({{ticker}}) </h1>
+    <h3>Current Price : <span class='price'></span></h3>
+    <h4>Change: <span class='change'></span>(<span class='pchange'></span>) </h4>
+    <h5>Open: <span class='open'></span> </h5>
+    <h5>High: <span class='dayhigh'></span> </h5>
+    <h5>Low: <span class='daylow'></span> </h5>
+    <h5>52-wk high: <span class='high52'></span> </h5>
+    <h5>52-wk low: <span class='low52'></span> </h5>
+    <h5>Previous Close: <span class='previousclose'></span> </h5>
+
+<br>
+<div class="tradingview-widget-container">
+  <div id="tradingview_0ee41"></div>
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+  <script type="text/javascript">
+  new TradingView.widget(
+    {
+      'width':700,
+      'height':400,
+      "symbol": "BSE:{{ticker}}",
+      "interval": "1",
+      "timezone": "Asia/Kolkata",
+      "theme": "light",
+      "style": "2",
+      "locale": "in",
+      "toolbar_bg": "#f1f3f6",
+      "enable_publishing": false,
+      "allow_symbol_change": true,
+      "container_id": "tradingview_0ee41"
+    });
+</script>
+</div>
+<br>
+<div class="container text-center">
+  <small>Please note that this chart displays one day old data due to security reasons. Please <a href="https://in.tradingview.com/symbols/BSE-{{ticker}}/">click here</a> to go to the TradingView page for the updated chart </small>
+</div>
+      <script>
+      // const $price = $('.price');
+      var count = 0;
+
+      function update(){
+        const $price = $('.price');
+        const $change = $('.change');
+        const $pchange = $('.pchange');
+        var xhr = new XMLHttpRequest();
+        var url = "{% url 'viewstock:get_data' %}?data=" + encodeURIComponent(JSON.stringify({"stock": "{{ticker}}"}));
+        console.log(url);
+        xhr.open("GET", url, true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          var json = JSON.parse(xhr.responseText);
+          $price.html(json.current);
+          $change.html(json.change);
+          $pchange.html(json.pchange);
+            }
+        };
+        xhr.send()
+        count=count+1;
+        if(count<=30)
+        {
+          setTimeout(update,10000)
+        }
+        else
+        {
+          alert('You were inactive for a very long time. Your session has timed out. Please refresh the page to update the stocks again.')
+          console.log('session timed out')
+        }
+      }
+
+
+      function init(){
+        const $price = $('.price');
+        const $change = $('.change');
+        const $pchange = $('.pchange');
+        const $open = $('.open');
+        const $dayhigh = $('.dayhigh');
+        const $daylow = $('.daylow');
+        const $high52 = $('.high52');
+        const $low52 = $('.low52');
+        const $previousclose = $('.previousclose');
+        var xhr = new XMLHttpRequest();
+        var url = "{% url 'viewstock:init_get_data' %}?data=" + encodeURIComponent(JSON.stringify({"stock": "{{ticker}}"}));
+        xhr.open("GET", url, true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+            var json = JSON.parse(xhr.responseText);
+            $price.html(json.current);
+            $change.html(json.change);
+            $pchange.html(json.pchange);
+            $open.html(json.open);
+            $dayhigh.html(json.dayhigh);
+            $daylow.html(json.daylow);
+            $high52.html(json.high52);
+            $low52.html(json.low52);
+            $previousclose.html(json.previousclose);
+          }
+        };
+        xhr.send()
+      }
+
+
+      init();
+      update();
+      </script>
+
+ </div>
+ </div>
+
+ {% endblock  %}

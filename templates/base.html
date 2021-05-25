@@ -1,0 +1,99 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Young Investor's Competition</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style media="screen">
+  .jumbotron {
+      padding: 2rem 1rem;
+      margin-bottom: 2rem;
+      background-color: #e9ecef;
+      border-radius: .3rem;
+      padding-top: 2rem;
+      margin-top: 2rem
+      }
+  </style>
+
+  <style media="screen">
+      @media screen and (min-width: 0px) and (max-width: 700px) {
+        .mobileHidden{
+          display:none;
+        }
+      }
+
+      @media screen and (min-width: 701px) and (max-width: 3000px) {
+        .desktopHidden{
+          display:none;
+        }
+
+      }
+
+  </style>
+
+
+  </head>
+
+
+  <body>
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+          <a class="navbar-brand desktopHidden" style="font-size:30px;" href="{% url 'home' %}"><div class="" >YIC</div></a>
+          <a class="navbar-brand mobileHidden" style="font-size:30px;" href="{% url 'home' %}"><div class="" >Young Investor's Competition</div></a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto  mb-2 mb-lg-0">
+
+              {% if user.is_authenticated %}
+                      <!-- <li class="nav-item">
+                        <a class="nav-link" style="font-size:20px;" href=""></a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" style="font-size:20px;" href=""></a>
+                      </li> -->
+                      <li class="nav-item">
+                        <a class="nav-link" style="font-size:20px;" href="{% url 'viewstock:home' %}">View Stocks</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" style="font-size:20px;" href="{% url 'accounts:logout' %}" onclick="return confirm('Are you sure you want to log out?');">Logout</a>
+                      </li>
+
+                {% else %}
+                      <li class="nav-item">
+                        <a class="nav-link" style="font-size:20px;" href="{% url 'accounts:login' %}" class="btn btn-simple">Log in</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" style="font-size:20px;" href="{% url 'accounts:signup' %}" class="btn btn-simple">Sign up</a>
+                      </li>
+                {% endif %}
+
+            </ul>
+          </div>
+        </div>
+        </nav>
+
+        <div class="container">
+          {% block content_container %}
+
+          {% endblock %}
+        </div>
+
+       {% block content_nocontainer %}
+       {% endblock %}
+
+
+
+
+
+
+
+
+  </body>
+</html>
