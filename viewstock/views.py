@@ -62,4 +62,4 @@ def init_get_data(request):
     return JsonResponse(dict)
 
 def test(request):
-    return "This is a test"
+    return "This is a test in the test branch"
