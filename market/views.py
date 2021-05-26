@@ -9,3 +9,9 @@ class LoggedoutPage(TemplateView):
 
 def LoggedinPage(request):
     return render(request,'loggedin.html')
+
+def test():
+    pass
+
+def test2():
+    pass
