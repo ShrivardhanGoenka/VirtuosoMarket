@@ -22,7 +22,10 @@
     <h5>52-wk high: <span class='high52'></span> </h5>
     <h5>52-wk low: <span class='low52'></span> </h5>
     <h5>Previous Close: <span class='previousclose'></span> </h5>
-
+<br>
+    <div class="text-center">
+      <a href="{% url 'trade:trade' %}{{ticker}}"><button type="button" name="button" class="btn btn-primary">Trade Now</button> </a>
+    </div>
 <br>
 <div class="tradingview-widget-container">
   <div id="tradingview_0ee41"></div>
