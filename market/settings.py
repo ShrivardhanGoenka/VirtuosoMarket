@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-vev_(ld39(j=!n7zrl0t@j-v7!f@^0fl99q(hg%95$4g91#tio
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1','192.168.0.102']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'accounts',
     'django_bootstrap5',
     'viewstock',
+    'portfolio',
+    'trade',
 ]
 
 MIDDLEWARE = [

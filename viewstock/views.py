@@ -23,6 +23,7 @@ def home(request):
     return render(request,'viewstock/searchbar.html')
 
 def stockinfo(request):
+    print(request.POST)
     try:
         instance = StockListModel.objects.get(name=request.POST.get('stock').split('(')[0])
         return render(request,'viewstock/stock.html',context={'name': instance.name , 'ticker' :instance.ticker})
@@ -31,7 +32,8 @@ def stockinfo(request):
             instance = StockListModel.objects.get(ticker=request.POST.get('stock').upper())
             return render(request,'viewstock/stock.html',context={'name': instance.name , 'ticker' :instance.ticker})
 
-        except:
+        except Exception as e:
+            print(e)
             return render(request,'viewstock/stocknotfound.html')
 
 def get_data(request):

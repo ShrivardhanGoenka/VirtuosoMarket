@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content_container %}
+
+  {% if notfound %}<h2>The stock was not found</h2>
+  {% else %}
+  <h2>Welcome to trade</h2>
+  <h2>{{name}}</h2>
+
+  {% endif %}
+
+  <script type="text/javascript">
+    console.log('{{name}}')
+  </script>
+{% endblock content_container %}

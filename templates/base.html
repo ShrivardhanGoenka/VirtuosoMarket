@@ -52,14 +52,11 @@
             <ul class="navbar-nav me-auto  mb-2 mb-lg-0">
 
               {% if user.is_authenticated %}
-                      <!-- <li class="nav-item">
-                        <a class="nav-link" style="font-size:20px;" href=""></a>
-                      </li>
-                      <li class="nav-item">
-                        <a class="nav-link" style="font-size:20px;" href=""></a>
-                      </li> -->
                       <li class="nav-item">
                         <a class="nav-link" style="font-size:20px;" href="{% url 'viewstock:home' %}">View Stocks</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" style="font-size:20px;" href="{% url 'portfolio:portfolio' %}">My Portfolio</a>
                       </li>
                       <li class="nav-item">
                         <a class="nav-link" style="font-size:20px;" href="{% url 'accounts:logout' %}" onclick="return confirm('Are you sure you want to log out?');">Logout</a>
@@ -89,7 +86,8 @@
        {% endblock %}
 
 
-
+      <!-- Comment added by Shrivardhan Goenka -->
+      <!-- Comment added by Prakarsh Jhajharia -->
 
 
 
