@@ -9,3 +9,6 @@ def home(request):
     cash = float(query_portfolio.get().cash)
     marketvalue = float(query_portfolio.get().market)
     return render(request,'portfolio/portfolio.html', {'type':current, 'cash':cash,'market':marketvalue})
+
+def test():
+    pass
