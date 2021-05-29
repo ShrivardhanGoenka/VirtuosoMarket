@@ -22,7 +22,7 @@
 
         <div class="text-center">
 
-        <form class="" action="{% url 'viewstock:stockinfo' %}" method="post" autocomplete="off">
+        <form class="" action="{% url 'viewstock:stockredirect' %}" method="post" autocomplete="off">
           {% csrf_token %}
           <input type="text" name="stock" id="stock" placeholder="Enter stock name/symbol">
           <input type="submit" id='stockbuttn' value="Submit">
