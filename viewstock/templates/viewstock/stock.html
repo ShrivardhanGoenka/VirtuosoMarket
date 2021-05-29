@@ -1,5 +1,14 @@
 {% extends "viewstock/searchbar.html" %}
 
+<head>
+  <script type="text/javascript">
+    function test(){
+      console.log('reached')
+    }
+  </script>
+
+</head>
+
  {% block stockinfo %}
 <br>
 <div class="container">
@@ -12,6 +21,8 @@
   }
 </style>
 
+
+
 <div class="jumbotron mybody">
     <h1>{{name}}({{ticker}}) </h1>
     <h3>Current Price : <span class='price'></span></h3>
@@ -23,9 +34,6 @@
     <h5>52-wk low: <span class='low52'></span> </h5>
     <h5>Previous Close: <span class='previousclose'></span> </h5>
 <br>
-    <div class="text-center">
-      <a href="{% url 'trade:trade' %}{{ticker}}"><button type="button" name="button" class="btn btn-primary">Trade Now</button> </a>
-    </div>
 <br>
 <div class="tradingview-widget-container">
   <div id="tradingview_0ee41"></div>
@@ -51,78 +59,185 @@
 <div class="container text-center">
   <small>Please note that this chart displays one day old data due to security reasons. Please <a href="https://in.tradingview.com/symbols/BSE-{{ticker}}/">click here</a> to go to the TradingView page for the updated chart </small>
 </div>
-      <script>
-      // const $price = $('.price');
-      var count = 0;
 
-      function update(){
-        const $price = $('.price');
-        const $change = $('.change');
-        const $pchange = $('.pchange');
-        var xhr = new XMLHttpRequest();
-        var url = "{% url 'viewstock:get_data' %}?data=" + encodeURIComponent(JSON.stringify({"stock": "{{ticker}}"}));
-        console.log(url);
-        xhr.open("GET", url, true);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-          var json = JSON.parse(xhr.responseText);
-          $price.html(json.current);
-          $change.html(json.change);
-          $pchange.html(json.pchange);
-            }
-        };
-        xhr.send()
-        count=count+1;
-        if(count<=30)
-        {
-          setTimeout(update,10000)
-        }
-        else
-        {
-          alert('You were inactive for a very long time. Your session has timed out. Please refresh the page to update the stocks again.')
-          console.log('session timed out')
-        }
-      }
+<div class="jumbotron">
+  <h1>Trade Now</h1>
+
+  <h2>Buy</h2>
+  <h3>Cash in hand: Rs {{cash}}</h3>
+  <h3>Market Value</h3>
+  <h4>Price: <span class='price'></span></h4>
+  <form class="Buy-mkt" action="{% url 'viewstock:buystock' %}" method="post">
+    {% csrf_token %}
+    <label for="">Quantity: </label>
+    <input type="text" name="quantity-mkt" value="" required ><br>
+    <h4>
+    <label for="takeprofit">Take profit:</label>
+    <input type="checkbox" id='takeprofit' name="takeprofit" value="" onclick="document.getElementById('mkt-1').disabled = !this.checked;
+                                                                               document.getElementById('mkt-2').disabled = !this.checked;
+                                                                               document.getElementById('mkt-3').disabled = !this.checked;">
+    </h4>
+    <label for="">Price: </label>
+    <input type="text" id="mkt-1" required disabled name="price-profit" value="">
+    <label for="">Percentage: </label>
+    <input type="text" id="mkt-2" required disabled name="percentage-profit" value="">
+    <label for="">Change: </label>
+    <input type="text" id="mkt-3" required disabled name="value-profit" value="">
+    <h4>
+    <label for="stoploss">Stop Loss:</label>
+    <input type="checkbox" id='stoploss' name="stoploss" value="" onclick="document.getElementById('mkt-4').disabled = !this.checked;
+                                                                           document.getElementById('mkt-5').disabled = !this.checked;
+                                                                           document.getElementById('mkt-6').disabled = !this.checked;">
+    </h4>
+    <label for="">Price: </label>
+    <input type="text" id="mkt-4" required disabled name="price-loss" value="">
+    <label for="">Percentage: </label>
+    <input type="text" id="mkt-5" required disabled name="percentage-loss" value="">
+    <label for="">Change: </label>
+    <input type="text" id="mkt-6" required disabled name="value-loss" value=""><br>
+    <label for="">Validity: </label>
+    <select class="" name="validity">
+      <option value="GTC">GTC(Good till cancelled)</option>
+      <option value="GTD">GTD(Good till day)</option>
+    </select>
+    <input type="hidden" name="stock" value="{{ticker}}">
+    <input type="submit" name="mkt" value="Submit">
+  </form>
+
+  <br><h3>Limit</h3>
+  <form class="Buy-lmt" action="" method="post">
+    {% csrf_token %}
+    <label for="">Quantity: </label>
+    <input type="text" name="quantity" value="" required><br>
+    <label for="">Order Price: </label>
+    <input type="text" name="order-price" value="" required>
+    <h4>
+    <label for="takeprofit-limit">Take profit:</label>
+    <input type="checkbox" id='takeprofit-limit' name="takeprofit" value="" onclick="document.getElementById('limit-1').disabled = !this.checked;
+                                                                               document.getElementById('limit-2').disabled = !this.checked;
+                                                                               document.getElementById('limit-3').disabled = !this.checked;">
+    </h4>
+    <label for="">Price: </label>
+    <input type="text" id = "limit-1" name="price-profit" value="" required disabled>
+    <label for="">Percentage: </label>
+    <input type="text" id= "limit-2" name="percentage-profit" value="" required disabled>
+    <label for="">Change: </label>
+    <input type="text" id= "limit-3" name="value-profit" value="" required disabled>
+    <h4>
+    <label for="stoploss-limit">Stop Loss:</label>
+    <input type="checkbox" id='stoploss-limit' name="stoploss" value="" onclick="document.getElementById('limit-4').disabled = !this.checked;
+                                                                               document.getElementById('limit-5').disabled = !this.checked;
+                                                                               document.getElementById('limit-6').disabled = !this.checked;">
+    </h4>
+    <label for="">Price: </label>
+    <input type="text" id='limit-5' required disabled name="price-loss" value="">
+    <label for="">Percentage: </label>
+    <input type="text" id='limit-4' required disabled name="percentage-loss" value="">
+    <label for="">Change: </label>
+    <input type="text" id='limit-6' required disabled name="value-loss" value=""><br>
+    <label for="">Validity: </label>
+    <select class="" name="validity">
+      <option value="GTC">GTC(Good till cancelled)</option>
+      <option value="GTD">GTD(Good till day)</option>
+    </select>
+    <input type="hidden" name="stock" value="{{ticker}}">
+    <input type="submit" name="lmt" value="Submit">
+  </form>
+
+  <br><h2>Sell</h2>
+  <h3>Your current holdings of this stock: None</h3>
+  <form class="" action="" method="post">
+    <label for="">Quantity</label>
+    <input type="text" name="quantity" value="" required>
+    <input type="hidden" name="stock" value="{{ticker}}">
+    <input type="submit" name="sell" value="Submit">
+  </form>
+
+</div>
 
 
-      function init(){
-        const $price = $('.price');
-        const $change = $('.change');
-        const $pchange = $('.pchange');
-        const $open = $('.open');
-        const $dayhigh = $('.dayhigh');
-        const $daylow = $('.daylow');
-        const $high52 = $('.high52');
-        const $low52 = $('.low52');
-        const $previousclose = $('.previousclose');
-        var xhr = new XMLHttpRequest();
-        var url = "{% url 'viewstock:init_get_data' %}?data=" + encodeURIComponent(JSON.stringify({"stock": "{{ticker}}"}));
-        xhr.open("GET", url, true);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState === 4 && xhr.status === 200) {
-            var json = JSON.parse(xhr.responseText);
-            $price.html(json.current);
-            $change.html(json.change);
-            $pchange.html(json.pchange);
-            $open.html(json.open);
-            $dayhigh.html(json.dayhigh);
-            $daylow.html(json.daylow);
-            $high52.html(json.high52);
-            $low52.html(json.low52);
-            $previousclose.html(json.previousclose);
-          }
-        };
-        xhr.send()
-      }
-
-
-      init();
-      update();
-      </script>
 
  </div>
  </div>
+
+ <script type="text/javascript">
+   const $price = $('.price');
+
+   if ( window.history.replaceState ) {
+     window.history.replaceState( null, null, window.location.href );
+   }
+
+   function takeprofit(){
+     console.log('Reached');
+   }
+
+   var count = 0;
+
+   function update(){
+     const $price = $('.price');
+     const $change = $('.change');
+     const $pchange = $('.pchange');
+     var xhr = new XMLHttpRequest();
+     var url = "{% url 'viewstock:get_data' %}?data=" + encodeURIComponent(JSON.stringify({"stock": "{{ticker}}"}));
+     xhr.open("GET", url, true);
+     xhr.setRequestHeader("Content-Type", "application/json");
+     xhr.onreadystatechange = function () {
+     if (xhr.readyState === 4 && xhr.status === 200) {
+       var json = JSON.parse(xhr.responseText);
+       $price.html(json.current);
+       $change.html(json.change);
+       $pchange.html(json.pchange);
+         }
+     };
+     xhr.send()
+     count=count+1;
+     if(count<=30)
+     {
+       setTimeout(update,10000)
+     }
+     else
+     {
+       alert('You were inactive for a very long time. Your session has timed out. Please refresh the page to update the stocks again.')
+       console.log('session timed out')
+     }
+   }
+
+
+   function init(){
+     const $price = $('.price');
+     const $change = $('.change');
+     const $pchange = $('.pchange');
+     const $open = $('.open');
+     const $dayhigh = $('.dayhigh');
+     const $daylow = $('.daylow');
+     const $high52 = $('.high52');
+     const $low52 = $('.low52');
+     const $previousclose = $('.previousclose');
+     var xhr = new XMLHttpRequest();
+     var url = "{% url 'viewstock:init_get_data' %}?data=" + encodeURIComponent(JSON.stringify({"stock": "{{ticker}}"}));
+     xhr.open("GET", url, true);
+     xhr.setRequestHeader("Content-Type", "application/json");
+     xhr.onreadystatechange = function () {
+       if (xhr.readyState === 4 && xhr.status === 200) {
+         var json = JSON.parse(xhr.responseText);
+         $price.html(json.current);
+         $change.html(json.change);
+         $pchange.html(json.pchange);
+         $open.html(json.open);
+         $dayhigh.html(json.dayhigh);
+         $daylow.html(json.daylow);
+         $high52.html(json.high52);
+         $low52.html(json.low52);
+         $previousclose.html(json.previousclose);
+       }
+     };
+     xhr.send()
+   }
+   init();
+   update();
+
+
+ </script>
+
 
  {% endblock  %}
