@@ -1,18 +1,10 @@
 <!--Added comment - Shrivardhan-->
 {% extends "viewstock/searchbar.html" %}
 
-<head>
-  <script type="text/javascript">
-    function test(){
-      console.log('reached')
-    }
-  </script>
-
-</head>
 
  {% block stockinfo %}
 <br>
-<div class="container">
+<div class="">
 
 <style media="screen">
   .mybody{
@@ -22,7 +14,14 @@
   }
 </style>
 
-
+{% for message in messages %}
+<div class="container-fluid p-0">
+  <div class="alert {{ message.tags }} alert-dismissible" role="alert" >
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+</div>
+{% endfor %}
 
 <div class="jumbotron mybody">
     <h1>{{name}}({{ticker}}) </h1>
@@ -40,21 +39,21 @@
   <div id="tradingview_0ee41"></div>
   <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
   <script type="text/javascript">
-  new TradingView.widget(
-    {
-      'autosize':true,
-      "symbol": "BSE:{{ticker}}",
-      "interval": "1",
-      "timezone": "Asia/Kolkata",
-      "theme": "light",
-      "style": "2",
-      "locale": "in",
-      "toolbar_bg": "#f1f3f6",
-      "enable_publishing": false,
-      "allow_symbol_change": true,
-      "container_id": "tradingview_0ee41"
-    });
-</script>
+    new TradingView.widget(
+      {
+        'autosize':true,
+        "symbol": "BSE:{{ticker}}",
+        "interval": "1",
+        "timezone": "Asia/Kolkata",
+        "theme": "light",
+        "style": "2",
+        "locale": "in",
+        "toolbar_bg": "#f1f3f6",
+        "enable_publishing": false,
+        "allow_symbol_change": true,
+        "container_id": "tradingview_0ee41"
+      });
+  </script>
 </div>
 <br>
 <div class="container text-center">
@@ -67,37 +66,44 @@
   <h2>Buy</h2>
   <h3>Cash in hand: Rs {{cash}}</h3>
   <h3>Market Value</h3>
-  <h4>Price: <span class='price'></span></h4>
-  <form class="Buy-mkt" action="{% url 'viewstock:buystock' %}" method="post">
+  <h4>Price: <span id='price-buying-capacity' class='price'></span></h4>
+  <h5>Buying Capacity: <span id='buyingcapacity'></span> </h5>
+  <form class="Buy-mkt" action="/viewstock/stockinfo/{{ticker}}" method="post" onsubmit="return checkForTheCondition();">
     {% csrf_token %}
     <label for="">Quantity: </label>
-    <input type="text" name="quantity-mkt" value="" required ><br>
+    <input type="number" step="any" id="quantity-mkt" name="quantity-mkt" value="0" required onchange="change_quantity_mkt();"><br>
+    <span id="error_quantity_mkt"></span>
+    <h5>Total amount: Rs <span id="total_mkt">0</span> </h5>
     <h4>
-    <label for="takeprofit">Take profit:</label>
-    <input type="checkbox" id='takeprofit' name="takeprofit" value="" onclick="document.getElementById('mkt-1').disabled = !this.checked;
+    <label for="mkttakeprofitcheckbox">Take profit:</label>
+    <input type="checkbox" id='mkttakeprofitcheckbox' name="takeprofit" value="" onclick="checkboxtakeprofitmkt();
+                                                                              document.getElementById('mkt-1').disabled = !this.checked;
                                                                                document.getElementById('mkt-2').disabled = !this.checked;
                                                                                document.getElementById('mkt-3').disabled = !this.checked;">
     </h4>
     <label for="">Price: </label>
-    <input type="text" id="mkt-1" required disabled name="price-profit" value="">
+    <input type="number" step="any" id="mkt-1" required disabled name="price-profit" value="" onchange = "mktprofitprice()">
     <label for="">Percentage: </label>
-    <input type="text" id="mkt-2" required disabled name="percentage-profit" value="">
+    <input type="number" step="any" id="mkt-2" required disabled name="percentage-profit" value="" onchange="mktprofitpercent()">
     <label for="">Change: </label>
-    <input type="text" id="mkt-3" required disabled name="value-profit" value="">
+    <input type="number" step="any" id="mkt-3" required disabled name="value-profit" value="" onchange = "mktprofitchange()">
+    <span id="error_takeprofit_mkt"></span>
     <h4>
-    <label for="stoploss">Stop Loss:</label>
-    <input type="checkbox" id='stoploss' name="stoploss" value="" onclick="document.getElementById('mkt-4').disabled = !this.checked;
+    <label for="stoplossmkt">Stop Loss:</label>
+    <input type="checkbox" id='stoplossmkt' name="stoploss" value="" onclick="checkboxstoplossmkt();
+                                                                           document.getElementById('mkt-4').disabled = !this.checked;
                                                                            document.getElementById('mkt-5').disabled = !this.checked;
                                                                            document.getElementById('mkt-6').disabled = !this.checked;">
     </h4>
     <label for="">Price: </label>
-    <input type="text" id="mkt-4" required disabled name="price-loss" value="">
+    <input type="number" step="any" id="mkt-4" required disabled name="price-loss" value="" onchange="mktlossprice()">
     <label for="">Percentage: </label>
-    <input type="text" id="mkt-5" required disabled name="percentage-loss" value="">
+    <input type="number" step="any" id="mkt-5" required disabled name="percentage-loss" value="" onchange="mktlosspercent()">
     <label for="">Change: </label>
-    <input type="text" id="mkt-6" required disabled name="value-loss" value=""><br>
+    <input type="number" step="any" id="mkt-6" required disabled name="value-loss" value="" onchange="mktlosschange()"><br>
+    <span id="error_stoploss_mkt"></span>
     <label for="">Validity: </label>
-    <select class="" name="validity">
+    <select class="" name="validity" id="validity-mkt">
       <option value="GTC">GTC(Good till cancelled)</option>
       <option value="GTD">GTD(Good till day)</option>
     </select>
@@ -106,38 +112,45 @@
   </form>
 
   <br><h3>Limit</h3>
-  <form class="Buy-lmt" action="" method="post">
+  <form class="Buy-lmt" action="/viewstock/stockinfo/{{ticker}}" method="post" onsubmit="return checkForTheConditionlmt();">
     {% csrf_token %}
-    <label for="">Quantity: </label>
-    <input type="text" name="quantity" value="" required><br>
     <label for="">Order Price: </label>
-    <input type="text" name="order-price" value="" required>
+    <input type="number" id= 'orderprice_lmt' step="any" name="order-price"  required onchange='orderpricelmt()' min="1" value="0">
+    <span id="error_orderprice_lmt"></span>
+    <label for="">Quantity: </label>
+    <input type="number" id="quantity_lmt" step="any" name="quantity"  required max="100000" min='1' value="0" onchange="quantitylmt()"><br>
+    <small>Please note that if you do not have enough cash when the price drops to your entered price, the order will get cancelled. It will not adjust the quantity.</small>
+    <h5>Total Amount: Rs <span id="total_lmt">0</span> </h5>
     <h4>
-    <label for="takeprofit-limit">Take profit:</label>
-    <input type="checkbox" id='takeprofit-limit' name="takeprofit" value="" onclick="document.getElementById('limit-1').disabled = !this.checked;
-                                                                               document.getElementById('limit-2').disabled = !this.checked;
-                                                                               document.getElementById('limit-3').disabled = !this.checked;">
+    <label for="lmttakeprofitcheckbox">Take profit:</label>
+    <input type="checkbox" id='lmttakeprofitcheckbox' name="takeprofit" value="" onclick="checkboxtakeprofitlmt();
+                                                                              document.getElementById('lmt-1').disabled = !this.checked;
+                                                                               document.getElementById('lmt-2').disabled = !this.checked;
+                                                                               document.getElementById('lmt-3').disabled = !this.checked;">
     </h4>
     <label for="">Price: </label>
-    <input type="text" id = "limit-1" name="price-profit" value="" required disabled>
+    <input type="number" step="any" id="lmt-1" required disabled name="price-profit" value="" onchange = "lmtprofitprice()">
     <label for="">Percentage: </label>
-    <input type="text" id= "limit-2" name="percentage-profit" value="" required disabled>
+    <input type="number" step="any" id="lmt-2" required disabled name="percentage-profit" value="" onchange="lmtprofitpercent()">
     <label for="">Change: </label>
-    <input type="text" id= "limit-3" name="value-profit" value="" required disabled>
+    <input type="number" step="any" id="lmt-3" required disabled name="value-profit" value="" onchange = "lmtprofitchange()">
+    <span id="error_takeprofit_lmt"></span>
     <h4>
-    <label for="stoploss-limit">Stop Loss:</label>
-    <input type="checkbox" id='stoploss-limit' name="stoploss" value="" onclick="document.getElementById('limit-4').disabled = !this.checked;
-                                                                               document.getElementById('limit-5').disabled = !this.checked;
-                                                                               document.getElementById('limit-6').disabled = !this.checked;">
+    <label for="stoplosslmt">Stop Loss:</label>
+    <input type="checkbox" id='stoplosslmt' name="stoploss" value="" onclick="checkboxstoplosslmt();
+                                                                           document.getElementById('lmt-4').disabled = !this.checked;
+                                                                           document.getElementById('lmt-5').disabled = !this.checked;
+                                                                           document.getElementById('lmt-6').disabled = !this.checked;">
     </h4>
     <label for="">Price: </label>
-    <input type="text" id='limit-5' required disabled name="price-loss" value="">
+    <input type="number" step="any" id="lmt-4" required disabled name="price-loss" value="" onchange="lmtlossprice()">
     <label for="">Percentage: </label>
-    <input type="text" id='limit-4' required disabled name="percentage-loss" value="">
+    <input type="number" step="any" id="lmt-5" required disabled name="percentage-loss" value="" onchange="lmtlosspercent()">
     <label for="">Change: </label>
-    <input type="text" id='limit-6' required disabled name="value-loss" value=""><br>
+    <input type="number" step="any" id="lmt-6" required disabled name="value-loss" value="" onchange="lmtlosschange()"><br>
+    <span id="error_stoploss_lmt"></span>
     <label for="">Validity: </label>
-    <select class="" name="validity">
+    <select class="" name="validity" id="validity-lmt">
       <option value="GTC">GTC(Good till cancelled)</option>
       <option value="GTD">GTD(Good till day)</option>
     </select>
@@ -145,14 +158,312 @@
     <input type="submit" name="lmt" value="Submit">
   </form>
 
+<script type="text/javascript">
+    function checkForTheCondition(){
+      change_quantity_mkt();
+      //console.log(document.getElementById("error_takeprofit_mkt").textContent)
+      var q_error = document.getElementById('error_quantity_mkt').innerText;
+      var p_error = document.getElementById('error_takeprofit_mkt').innerText;
+      var l_error = document.getElementById('error_stoploss_mkt').innerText;
+      if(q_error.localeCompare('')==0 && p_error.localeCompare('')==0 && l_error.localeCompare('')==0){
+        return true;
+      }
+      else{
+        return false;
+      }
+    }
+    function checkForTheConditionlmt(){
+      var q_error = document.getElementById('error_orderprice_lmt').innerText;
+      var p_error = document.getElementById('error_takeprofit_lmt').innerText;
+      var l_error = document.getElementById('error_stoploss_lmt').innerText;
+      if(q_error.localeCompare('')==0 && p_error.localeCompare('')==0 && l_error.localeCompare('')==0){
+        return true;
+      }
+      else{
+        return false;
+      }
+    }
+    function spanfunc(){
+        var span = document.getElementById("price-buying-capacity").innerText;
+        var price = parseFloat(document.getElementById("price-buying-capacity").innerText);
+        var amt = parseFloat('{{cash}}');
+        document.getElementById('buyingcapacity').innerHTML =  Math.floor(amt/price);
+        if(span.localeCompare('') == 0)
+        {setTimeout(spanfunc,2000)}
+    }
+    function change_quantity_mkt(){
+      var q = parseInt(document.getElementById('quantity-mkt').value)
+      var s = Math.floor(q)
+      document.getElementById('quantity-mkt').value=s
+      var max = parseInt(document.getElementById('buyingcapacity').innerText)
+      var error = document.getElementById("error_quantity_mkt")
+      document.getElementById('total_mkt').textContent = parseFloat(document.getElementById("price-buying-capacity").innerText)*s
+      if(s<=0)
+      {
+        error.textContent = "Please enter a number greater than 0"
+        error.style.color = "red"
+      }
+      else if(s>max)
+      {
+        error.textContent = "You do not have the cash to buy this quantity"
+        error.style.color = "red"
+      }
+      else{
+        error.textContent = ""
+
+      }
+    }
+    function checkboxtakeprofitmkt(){
+      var error = document.getElementById("error_takeprofit_mkt");
+      error.textContent = "";
+    }
+    function mktlossprice(){
+      var p = document.getElementById('mkt-4').value
+      var current = parseFloat(document.getElementById("price-buying-capacity").innerText)
+      var change = current - p;
+      var percent = change/current * 100;
+      document.getElementById('mkt-5').value = percent.toFixed(2);
+      document.getElementById('mkt-6').value = change.toFixed(2);
+      errorcheckmktloss();
+    }
+    function mktlosspercent(){
+      var percent =   document.getElementById('mkt-5').value;
+      var current = parseFloat(document.getElementById("price-buying-capacity").innerText)
+      var change = current*percent/100;
+      var price = current-change;
+      document.getElementById('mkt-4').value = parseFloat(price).toFixed(2);
+      document.getElementById('mkt-6').value = change.toFixed(2);
+      errorcheckmktloss();
+    }
+    function mktlosschange(){
+      var change = document.getElementById('mkt-6').value;
+      var current = parseFloat(document.getElementById("price-buying-capacity").innerText)
+      var price = parseFloat(current) - parseFloat(change);
+      var percent = change/current * 100;
+      document.getElementById('mkt-5').value = parseFloat(percent).toFixed(2);
+      document.getElementById('mkt-4').value = parseFloat(price).toFixed(2);
+      errorcheckmktloss();
+    }
+    function errorcheckmktloss(){
+      var percent = document.getElementById('mkt-5').value;
+      p = parseFloat(percent);
+      var error = document.getElementById("error_stoploss_mkt")
+      var price = document.getElementById('mkt-3').value
+      if(parseFloat(price)<=0){
+        error.textContent = "The price must be greater than 0"
+        error.style.color = "red"
+      }
+      else if(p<0){
+        error.textContent = "The price must be lesser than the current price"
+        error.style.color = "red"
+      }
+      else{
+        error.textContent = "";
+      }
+    }
+    function checkboxstoplossmkt(){
+      var error = document.getElementById("error_stoploss_mkt");
+      error.textContent = "";
+    }
+    function mktprofitprice(){
+      var p = document.getElementById('mkt-1').value
+      var current = parseFloat(document.getElementById("price-buying-capacity").innerText)
+      var change = p - current;
+      var percent = change/current * 100;
+      document.getElementById('mkt-2').value = percent.toFixed(2);
+      document.getElementById('mkt-3').value = change.toFixed(2);
+      errorcheckmktprofit();
+    }
+    function mktprofitpercent(){
+      var percent =   document.getElementById('mkt-2').value;
+      var current = parseFloat(document.getElementById("price-buying-capacity").innerText)
+      var change = current*percent/100;
+      var price = change+current;
+      document.getElementById('mkt-1').value = parseFloat(price).toFixed(2);
+      document.getElementById('mkt-3').value = change.toFixed(2);
+      errorcheckmktprofit();
+    }
+    function mktprofitchange(){
+      var change = document.getElementById('mkt-3').value;
+      var current = parseFloat(document.getElementById("price-buying-capacity").innerText)
+      var price = parseFloat(change)+parseFloat(current);
+      var percent = change/current * 100;
+      document.getElementById('mkt-2').value = parseFloat(percent).toFixed(2);
+      document.getElementById('mkt-1').value = parseFloat(price).toFixed(2);
+      errorcheckmktprofit();
+    }
+    function errorcheckmktprofit(){
+      var percent = document.getElementById('mkt-2').value;
+      p = parseFloat(percent);
+      var error = document.getElementById("error_takeprofit_mkt")
+      var price = document.getElementById('mkt-1').value
+      if(parseFloat(price)<=0){
+        error.textContent = "The price must be greater than 0"
+        error.style.color = "red"
+      }
+      else if(p<0){
+        error.textContent = "The price must be greater than the current price"
+        error.style.color = "red"
+      }
+      else{
+        error.textContent = "";
+      }
+    }
+    function orderpricelmt(){
+        var price = parseFloat(document.getElementById('orderprice_lmt').value);
+        var current = parseFloat(document.getElementById("price-buying-capacity").innerText);
+        var error = document.getElementById('error_orderprice_lmt');
+        var quantity = parseFloat(document.getElementById('quantity_lmt').value)
+        document.getElementById('lmt-1').value = "";
+        document.getElementById('lmt-2').value = "";
+        document.getElementById('lmt-3').value = "";
+        document.getElementById('lmt-4').value = "";
+        document.getElementById('lmt-5').value = "";
+        document.getElementById('lmt-6').value = "";
+        document.getElementById('total_lmt').value = price * quantity;
+        if(price>=current){
+          error.textContent = "The price must be lesser than the current price"
+          error.style.color = "red"
+        }
+        else{
+          error.textContent = "";
+        }
+    }
+    function quantitylmt(){
+      var price = parseFloat(document.getElementById('orderprice_lmt').value);
+      var quantity = parseFloat(document.getElementById('quantity_lmt').value)
+      document.getElementById('total_lmt').textContent = price * quantity;
+    }
+    function checkboxtakeprofitlmt(){
+      var error = document.getElementById("error_takeprofit_lmt");
+      error.textContent = "";
+    }
+    function lmtlossprice(){
+      var p = document.getElementById('lmt-4').value
+      var current = parseFloat(document.getElementById('orderprice_lmt').value);
+      var change = current - p;
+      var percent = change/current * 100;
+      document.getElementById('lmt-5').value = percent.toFixed(2);
+      document.getElementById('lmt-6').value = change.toFixed(2);
+      errorchecklmtloss();
+    }
+    function lmtlosspercent(){
+      var percent =   document.getElementById('lmt-5').value;
+      var current = parseFloat(document.getElementById('orderprice_lmt').value);
+      var change = current*percent/100;
+      var price = current-change;
+      document.getElementById('lmt-4').value = parseFloat(price).toFixed(2);
+      document.getElementById('lmt-6').value = change.toFixed(2);
+      errorchecklmtloss();
+    }
+    function lmtlosschange(){
+      var change = document.getElementById('lmt-6').value;
+      var current = parseFloat(document.getElementById('orderprice_lmt').value);
+      var price = parseFloat(current) - parseFloat(change);
+      var percent = change/current * 100;
+      document.getElementById('lmt-5').value = parseFloat(percent).toFixed(2);
+      document.getElementById('lmt-4').value = parseFloat(price).toFixed(2);
+      errorchecklmtloss();
+    }
+    function errorchecklmtloss(){
+      var percent = document.getElementById('lmt-5').value;
+      p = parseFloat(percent);
+      var error = document.getElementById("error_stoploss_lmt")
+      var price = document.getElementById('lmt-4').value
+      if(parseFloat(price)<=0){
+        error.textContent = "The price must be greater than 0"
+        error.style.color = "red"
+      }
+      else if(p<=0){
+        error.textContent = "The price must be lesser than the order price"
+        error.style.color = "red"
+      }
+      else{
+        error.textContent = "";
+      }
+    }
+    function checkboxstoplosslmt(){
+      var error = document.getElementById("error_stoploss_lmt");
+      error.textContent = "";
+    }
+    function lmtprofitprice(){
+      var p = document.getElementById('lmt-1').value
+      var current = parseFloat(document.getElementById('orderprice_lmt').value);
+      var change = p - current;
+      var percent = change/current * 100;
+      document.getElementById('lmt-2').value = percent.toFixed(2);
+      document.getElementById('lmt-3').value = change.toFixed(2);
+      errorchecklmtprofit();
+    }
+    function lmtprofitpercent(){
+      var percent =   document.getElementById('lmt-2').value;
+      var current = parseFloat(document.getElementById('orderprice_lmt').value);
+      var change = current*percent/100;
+      var price = change+current;
+      document.getElementById('lmt-1').value = parseFloat(price).toFixed(2);
+      document.getElementById('lmt-3').value = change.toFixed(2);
+      errorchecklmtprofit();
+    }
+    function lmtprofitchange(){
+      var change = document.getElementById('lmt-3').value;
+      var current = parseFloat(document.getElementById('orderprice_lmt').value);
+      var price = parseFloat(change)+parseFloat(current);
+      var percent = change/current * 100;
+      document.getElementById('lmt-2').value = parseFloat(percent).toFixed(2);
+      document.getElementById('lmt-1').value = parseFloat(price).toFixed(2);
+      errorchecklmtprofit();
+    }
+    function errorchecklmtprofit(){
+      var percent = document.getElementById('lmt-2').value;
+      p = parseFloat(percent);
+      var error = document.getElementById("error_takeprofit_lmt")
+      var price = document.getElementById('lmt-1').value
+      if(parseFloat(price)<=0){
+        error.textContent = "The price must be greater than 0"
+        error.style.color = "red"
+      }
+      else if(p<=0){
+        error.textContent = "The price must be greater than the order price"
+        error.style.color = "red"
+      }
+      else{
+        error.textContent = "";
+      }
+    }
+    function sellquantity(){
+      var x = parseFloat(document.getElementById('quantitysell').value)
+      var y = parseInt('{{stock}}')
+      var error = document.getElementById('errorsellquantity')
+      if(x>y){
+        error.textContent = "You do not own this much of this stock"
+        error.style.color = 'red';
+      }
+      else{
+        error.textContent = ""
+      }
+    }
+    function checkForTheConditionsell(){
+      error = document.getElementById('errorsellquantity').textContent;
+      if(error.localeCompare('') == 0){
+        return true;
+      }
+      else{
+        return false;
+      }
+    }
+</script>
+
   <br><h2>Sell</h2>
-  <h3>Your current holdings of this stock: None</h3>
-  <form class="" action="" method="post">
+  <h3>Your current holdings of this stock: {{stock}}</h3>
+  <form class="" action="/viewstock/stockinfo/{{ticker}}" method="post" onsubmit="return checkForTheConditionsell();" >
+    {% csrf_token %}
     <label for="">Quantity</label>
-    <input type="text" name="quantity" value="" required>
+    <input type="number" id="quantitysell" name="quantity" value="" min:'1' required onchange='sellquantity()'>
+    <span id="errorsellquantity"></span>
     <input type="hidden" name="stock" value="{{ticker}}">
     <input type="submit" name="sell" value="Submit">
   </form>
+
 
 </div>
 
@@ -194,11 +505,13 @@
      count=count+1;
      if(count<=30)
      {
+       spanfunc();
        setTimeout(update,10000)
      }
      else
      {
-       alert('You were inactive for a very long time. Your session has timed out. Please refresh the page to update the stocks again.')
+       //alert('You were inactive for a long time. Your session has timed out. Please refresh the page to update the stocks again.')
+       if(!alert('You were inactive for a long time. Your session has timed out. Please refresh the page to update the stocks again.')){window.location.reload();}
        console.log('session timed out')
      }
    }
@@ -234,6 +547,7 @@
      };
      xhr.send()
    }
+
    init();
    update();
 

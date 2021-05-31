@@ -11,5 +11,5 @@ urlpatterns = [
     path("initdata.json/",views.init_get_data,name='init_get_data'),
     path('buystock/',views.buystock,name='buystock'),
     path('stockredirect/',views.stockredirect,name='stockredirect'),
-    path('test/<str:name>',views.test,name="test")
+    path('stockinfo/<str:name>',views.test,name="test")
 ]
