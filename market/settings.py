@@ -55,7 +55,6 @@ INSTALLED_APPS = [
     'django_bootstrap5',
     'viewstock',
     'portfolio',
-    'trade',
 ]
 
 MIDDLEWARE = [

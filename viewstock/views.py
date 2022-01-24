@@ -3,12 +3,11 @@ from .models import StockListModel
 from nsetools import Nse
 from django.http import JsonResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
-from portfolio.models import PortfolioModel, CurrentPortfolio
+from portfolio.models import PortfolioModel, CurrentPortfolio, CurrentOrders, TickerSet, PendingOrders
 from django.urls import reverse
 from django.contrib import messages
-# Create your views here.
+from datetime import datetime
 
-@login_required
 def home(request):
     if 'term' in request.GET:
         qs = StockListModel.objects.filter(name__icontains=request.GET.get('term'))
@@ -26,30 +25,6 @@ def home(request):
     return render(request,'viewstock/searchbar.html')
 
 def stockinfo(request):
-    # print('reached stock info')
-    # print(request.POST)
-    # query_current = CurrentPortfolio.objects.filter(username=request.user.username)
-    # current = query_current.get().current
-    # query_portfolio = PortfolioModel.objects.filter(username=request.user.username, type=current)
-    # cash = float(query_portfolio.get().cash)
-    # try:
-    #     instance = StockListModel.objects.get(name=request.POST.get('stock').split('(')[0])
-    #     return render(request,'viewstock/stock.html',context={'name': instance.name , 'ticker' :instance.ticker, 'cash':cash})
-    # except:
-    #     try:
-    #         instance = StockListModel.objects.get(ticker=request.POST.get('stock').upper())
-    #         return render(request,'viewstock/stock.html',context={'name': instance.name , 'ticker' :instance.ticker, 'cash':cash})
-    #
-    #         if 'mkt' in request.POST:
-    #             print('It is a market buy request')
-    #             if 'takeprofit' in request.POST:
-    #                 print('It is a takeprofit request')
-    #             if 'stoploss' in request.POST:
-    #                 print('It is a stoploss request')
-    #
-    #     except Exception as e:
-    #         print(e)
-    #         return render(request,'viewstock/stocknotfound.html')
     return HttpResponseRedirect('/viewstock/stockinfo/NOTFOUND')
 
 def get_data(request):
@@ -112,27 +87,126 @@ def test(request,name):
     if name == 'NOTFOUND':
         return render(request,'viewstock/stocknotfound.html')
     try:
+
         instance = StockListModel.objects.filter(ticker = name)
         if 'mkt' in request.POST:
-            price = float(nse.get_quote(name))
+            q = float(request.POST.get('quantity-mkt'))
+            quote = nse.get_quote(name)
+            flag = 0
+            for i in range (1,6):
+                if quote['sellQuantity' + str(i)] is None:
+                    flag+=1
+                if quote['buyQuantity' + str(i)] is None:
+                    flag+=1
+                if quote['sellPrice' + str(i)] is None:
+                    flag+=1
+                if quote['buyPrice' + str(i)] is None:
+                    flag+=1
+            if flag>=12:
+                print('market is closed')
+                messages.success(request,'Your order has been placed')
+                description = ""
+                if 'takeprofit' in request.POST:
+                    description+="takeprofit:" + str(request.POST.get('price-profit')) + "\n"
+                if 'stoploss' in request.POST:
+                    description+="stoploss:" + str(request.POST.get('price-loss'))
+                try:
+                    PendingOrders.objects.create(username=request.user.username,ordertime=datetime.now(),ticker=instance.get().ticker,quantity=q,type='mkt',condition=description)
+                except Exception as e:
+                    print('PendingOrders')
+                return render(request,'viewstock/stock.html',context={'name': instance.get().name , 'ticker' :instance.get().ticker, 'cash':cash, 'stock':stock})
+            price = float(quote['lastPrice'])
 
-            messages.success(request, 'Your order has been placed')
 
-            print('It is a market buy request')
+            if price*q > cash:
+                messages.error(request, 'An error occurred. Please try again!')
+                return render(request,'viewstock/stock.html',context={'name': instance.get().name , 'ticker' :instance.get().ticker, 'cash':cash, 'stock':stock})
+
+            n = instance.get().ticker
+            str1 = ""
+            p = portfolio.split(',')
+            flag=0
+            for item in p:
+                i = item.split(':')
+                if i[0] == n:
+                    flag = 1
+                    str1+= n +':' + str(int(int(i[1])+q)) + ','
+                    stock = str(int(int(i[1])+q))
+                else:
+                    str1+=item + ','
+            if flag == 0:
+                str1 += n+':'+str(int(q))+','
+                stock = str(int(q))
+            str1 = str1[:-1]
+            print(str1)
+            tleft = cash - price*q
+            query_portfolio.update(cash=str(tleft),detail=str1)
+            cash = tleft
+            messages.success(request, 'The stocks have been bought')
             if 'takeprofit' in request.POST:
-                print('It is a takeprofit request')
+                PendingOrders.objects.create(username=request.user.username,ordertime=datetime.now(),ticker=instance.get().ticker,quantity=q,amount=request.POST.get('price-profit'),type='sell')
+                messages.success(request,'Your take profit order has been placed.')
             if 'stoploss' in request.POST:
-                print('It is a stoploss request')
+                PendingOrders.objects.create(username=request.user.username,ordertime=datetime.now(),ticker=instance.get().ticker,quantity=q,amount=request.POST.get('price-loss'),type='sell')
+                messages.success(request,'Your stop loss order has been placed.')
         elif 'lmt' in request.POST:
-            print('It is a limit buy request')
+            description = ""
+            q = float(request.POST.get('quantity'))
+            price = float(request.POST.get('order-price'))
             if 'takeprofit' in request.POST:
-                print('It is a takeprofit request')
+                description+="takeprofit:" + str(request.POST.get('price-profit')) + "\n"
             if 'stoploss' in request.POST:
-                print('It is a stoploss request')
+                description+="stoploss:" + str(request.POST.get('price-loss'))
+            PendingOrders.objects.create(username=request.user.username,ordertime=datetime.now(),ticker=instance.get().ticker,amount=price,quantity=q,type='lmt',condition=description)
         elif 'sell' in request.POST:
-            print('it is a sell request')
+            print('in sell')
+            quote = nse.get_quote(name)
+            flag = 0
+            for i in range (1,6):
+                if quote['sellQuantity' + str(i)] is None:
+                    flag+=1
+                if quote['buyQuantity' + str(i)] is None:
+                    flag+=1
+                if quote['sellPrice' + str(i)] is None:
+                    flag+=1
+                if quote['buyPrice' + str(i)] is None:
+                    flag+=1
+            q = float(request.POST.get('quantity'))
+            print('in sell 1')
+            if flag>=12:
+                messages.success(request,'Your order has been placed')
+                PendingOrders.objects.create(username=request.user.username,ordertime=datetime.now(),ticker=instance.get().ticker,quantity=q,type='sell')
+                return render(request,'viewstock/stock.html',context={'name': instance.get().name , 'ticker' :instance.get().ticker, 'cash':cash, 'stock':stock})
+            q = float(request.POST.get('quantity'))
+            print('in sell 2')
+            p = portfolio.split(',')
+            flag=0
+            str1 = ""
+            for item in p:
+                i= item.split(':')
+                if i[0] == instance.get().ticker:
+                    if int(i[1]) >= q:
+                        flag=1
+                        stock = int(int(i[1]) - q)
+                        if int(i[1]) - q == 0:
+                            pass
+                        else:
+                            str1+=i[0]+':'+str(int(int(i[1])-q))+','
+                    else:
+                        messages.error('You do not have enough stock to sell. Please try again')
+                        return render(request,'viewstock/stock.html',context={'name': instance.get().name , 'ticker' :instance.get().ticker, 'cash':cash, 'stock':stock})
+                else:
+                    str1+=item + ','
+            str1 = str1[:-1]
+            price = float(quote['lastPrice'])
+            tleft = cash + price*q
+            print(str1)
+            cash = tleft
+            query_portfolio.update(cash=str(tleft),detail=str1)
+            messages.success(request,'The stock has been sold')
 
         return render(request,'viewstock/stock.html',context={'name': instance.get().name , 'ticker' :instance.get().ticker, 'cash':cash, 'stock':stock})
 
-    except:
+    except Exception as e:
+        print(e)
         return render(request,'viewstock/stocknotfound.html')

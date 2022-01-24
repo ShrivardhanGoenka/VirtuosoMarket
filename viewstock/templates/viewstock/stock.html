@@ -1,11 +1,8 @@
-<!--Added comment - Shrivardhan-->
-{% extends "viewstock/searchbar.html" %}
+{% extends "viewstock/bar.html" %}
 
 
  {% block stockinfo %}
-<br>
 <div class="">
-
 <style media="screen">
   .mybody{
       min-height: 700px;
@@ -16,9 +13,12 @@
 
 {% for message in messages %}
 <div class="container-fluid p-0">
-  <div class="alert {{ message.tags }} alert-dismissible" role="alert" >
+  <br>
+  <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert" >
     {{ message }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
   </div>
 </div>
 {% endfor %}
@@ -26,7 +26,7 @@
 <div class="jumbotron mybody">
     <h1>{{name}}({{ticker}}) </h1>
     <h3>Current Price : <span class='price'></span></h3>
-    <h4>Change: <span class='change'></span>(<span class='pchange'></span>) </h4>
+    <h4>Change: <span class='change'></span>(<span class='pchange'></span>%) </h4>
     <h5>Open: <span class='open'></span> </h5>
     <h5>High: <span class='dayhigh'></span> </h5>
     <h5>Low: <span class='daylow'></span> </h5>
@@ -197,7 +197,7 @@
       document.getElementById('quantity-mkt').value=s
       var max = parseInt(document.getElementById('buyingcapacity').innerText)
       var error = document.getElementById("error_quantity_mkt")
-      document.getElementById('total_mkt').textContent = parseFloat(document.getElementById("price-buying-capacity").innerText)*s
+      document.getElementById('total_mkt').textContent = (parseFloat(document.getElementById("price-buying-capacity").innerText)*s).toFixed(2)
       if(s<=0)
       {
         error.textContent = "Please enter a number greater than 0"

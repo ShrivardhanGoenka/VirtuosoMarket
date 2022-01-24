@@ -26,5 +26,4 @@ urlpatterns = [
     path('accounts/',include("django.contrib.auth.urls")),
     path('viewstock/',include("viewstock.urls")),
     path('portfolio/',include("portfolio.urls")),
-    path('trade/',include("trade.urls")),
 ]
